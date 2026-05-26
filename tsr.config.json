@@ -1,6 +1,4 @@
 {
-  "routesDirectory": "./src/routes",
-  "generatedRouteTree": "./src/routeTree.gen.ts",
-  "quoteStyle": "single",
-  "entryPoints": ["./vite.config.ts"]
-}
+    "routesDirectory": "src/routes",
+    "generatedRouteTree": "src/routeTree.gen.ts"
+  }
