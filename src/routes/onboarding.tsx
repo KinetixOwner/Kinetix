@@ -1,12 +1,11 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { CheckCircle2, ArrowRight } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/onboarding")({
   component: Onboarding,
@@ -47,39 +46,16 @@ function Onboarding() {
   async function generatePlan() {
     if (!user) return;
     setGenerating(true);
-    try {
-      await supabase.from("profiles").update({ 
-        display_name: name || undefined, 
-        age: answers.age,
-      }).eq("id", user.id);
-
-      const { data, error } = await supabase.functions.invoke("generate-plan", { body: answers });
-      
-      if (error || !data?.plan) {
-        toast.error("AI is busy — please try once more!");
-        setGenerating(false);
-        return;
-      }
-
-      await supabase.from("learning_plans").update({ is_active: false }).eq("user_id", user.id);
-      await supabase.from("learning_plans").insert({
-        user_id: user.id,
-        title: data.plan.title,
-        summary: data.plan.summary,
-        days: data.plan.days,
-        is_active: true,
-      });
-
-    } catch (e) {
-      console.error(e);
-      toast.error("Generation failed. Try again.");
-      setGenerating(false);
-    }
+    await supabase.from("profiles").update({
+      display_name: name || undefined,
+      age: answers.age,
+    }).eq("id", user.id);
+    // AI skipped for demo — loader handles redirect
   }
 
   const progress = ((step + 1) / STEPS) * 100;
 
-  if (showPaywall) return <PaywallView name={name} />;
+  if (showPaywall) return <PaywallView />;
   if (generating) return <GeneratingView onLoaderComplete={() => setShowPaywall(true)} />;
 
   return (
@@ -126,7 +102,7 @@ function Onboarding() {
             <StepWrap title="Your interests?">
               <div className="grid grid-cols-2 gap-3">
                 {["games", "websites", "art", "music", "apps", "robots"].map((i) => (
-                  <ChoiceChip key={i} active={answers.interests.includes(i)} onClick={() => setAnswers({...answers, interests: answers.interests.includes(i) ? answers.interests.filter(x => x !== i) : [...answers.interests, i]})}>
+                  <ChoiceChip key={i} active={answers.interests.includes(i)} onClick={() => setAnswers({ ...answers, interests: answers.interests.includes(i) ? answers.interests.filter(x => x !== i) : [...answers.interests, i] })}>
                     {i.toUpperCase()}
                   </ChoiceChip>
                 ))}
@@ -180,12 +156,12 @@ function StepWrap({ title, children }: { title: string; children: React.ReactNod
 
 function ChoiceChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button 
-      type="button" 
-      onClick={onClick} 
+    <button
+      type="button"
+      onClick={onClick}
       className={`rounded-2xl border-2 px-6 py-4 font-black italic tracking-wide text-sm uppercase transition-all ${
-        active 
-          ? "border-blue-500 bg-blue-600/10 text-white shadow-[0_0_15px_rgba(59,130,246,0.25)]" 
+        active
+          ? "border-blue-500 bg-blue-600/10 text-white shadow-[0_0_15px_rgba(59,130,246,0.25)]"
           : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white"
       }`}
     >
@@ -194,24 +170,6 @@ function ChoiceChip({ active, onClick, children }: { active: boolean; onClick: (
   );
 }
 
-function ChoiceRow({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button 
-      type="button" 
-      onClick={onClick} 
-      className={`flex items-center justify-between rounded-2xl border-2 px-6 py-5 font-black italic tracking-wide uppercase transition-all ${
-        active 
-          ? "border-blue-500 bg-blue-600/10 text-white shadow-[0_0_15px_rgba(59,130,246,0.25)]" 
-          : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700 hover:text-white"
-      }`}
-    >
-      <span>{children}</span>
-      {active && <CheckCircle2 className="text-blue-500 w-5 h-5 drop-shadow-[0_0_4px_rgba(59,130,246,0.5)]" />}
-    </button>
-  );
-}
-
-// 🕹️ GAMIFIED HIGH-GLOW MOUNT INTERFACE LOADER
 function GeneratingView({ onLoaderComplete }: { onLoaderComplete: () => void }) {
   const [percent, setPercent] = useState(0);
   const [terminalText, setTerminalText] = useState("LOADING NEURAL NODE ENGINES...");
@@ -231,19 +189,15 @@ function GeneratingView({ onLoaderComplete }: { onLoaderComplete: () => void }) 
       setPercent((prev) => {
         if (prev >= 100) {
           clearInterval(progressTimer);
-          setTimeout(() => {
-            onLoaderComplete();
-          }, 600);
+          setTimeout(() => onLoaderComplete(), 600);
           return 100;
         }
-        const stepAdd = Math.floor(Math.random() * 5) + 3; 
-        return Math.min(prev + stepAdd, 100);
+        return Math.min(prev + Math.floor(Math.random() * 5) + 3, 100);
       });
     }, 600);
 
     const logTimer = setInterval(() => {
-      const logPhrase = statusLogs[Math.floor(Math.random() * statusLogs.length)];
-      setTerminalText(logPhrase);
+      setTerminalText(statusLogs[Math.floor(Math.random() * statusLogs.length)]);
     }, 3500);
 
     return () => {
@@ -262,7 +216,6 @@ function GeneratingView({ onLoaderComplete }: { onLoaderComplete: () => void }) 
           </div>
           <span>EST_WAIT: &lt; 45S</span>
         </div>
-
         <div className="my-10 text-center">
           <h2 className="text-6xl font-[1000] italic tracking-tighter text-white tabular-nums mb-3 drop-shadow-[0_0_20px_rgba(255,255,255,0.15)]">
             {percent}%
@@ -271,14 +224,12 @@ function GeneratingView({ onLoaderComplete }: { onLoaderComplete: () => void }) 
             {terminalText}
           </p>
         </div>
-
         <div className="w-full h-3 rounded-full bg-slate-950 p-[2px] border border-slate-800 overflow-hidden">
-          <div 
+          <div
             className="h-full rounded-full bg-gradient-to-r from-blue-500 via-blue-400 to-purple-500 transition-all duration-500 ease-out shadow-[0_0_15px_rgba(59,130,246,0.6)]"
             style={{ width: `${percent}%` }}
           />
         </div>
-
         <div className="mt-6 flex justify-between text-[10px] text-slate-600 font-bold">
           <span>BUILD // KINETIX_CORE_v1.0</span>
           <span>COMPILING_MISSION_DATA</span>
@@ -288,21 +239,17 @@ function GeneratingView({ onLoaderComplete }: { onLoaderComplete: () => void }) 
   );
 }
 
-// 💎 RADIANT GLOWING PLAN REDIRECT INTERFACE
 function PaywallView() {
   const navigate = useNavigate();
 
-  // Instantly skip this view and dump right into the dashboard
   useEffect(() => {
     navigate({ to: "/dashboard" });
   }, [navigate]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-6 text-white font-sans overflow-hidden relative">
-      {/* Background Radial Glow Effect matching Landing page */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-10 pointer-events-none"
         style={{ background: "radial-gradient(circle, #2563eb 0%, transparent 65%)" }} />
-
       <div className="relative z-10 text-center space-y-4">
         <div className="flex items-center justify-center gap-2">
           <div className="h-2 w-2 rounded-full bg-blue-500 animate-ping" />
