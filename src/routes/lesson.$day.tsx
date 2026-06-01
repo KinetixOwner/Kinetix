@@ -1,9 +1,11 @@
-import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { withTimeout } from "@/utils/fetchWithTimeout";
+import { FALLBACK_DAYS } from "@/data/fallbackPlan";
 import { 
   ArrowLeft, ArrowRight, Loader2, BrainCircuit, 
   ChevronRight, Monitor, Terminal, ShieldCheck, Check, X, Info, Award, Printer
@@ -143,7 +145,7 @@ function Lesson() {
   }
 
   if (loading || fetching) return <div className="flex h-screen items-center justify-center bg-white"><Loader2 className="h-10 w-10 animate-spin text-blue-600" /></div>;
-  if (!currentDayData) return <div className="p-20 text-center font-black uppercase italic tracking-[0.5em]">Module_Data_Missing</div>;
+  if (!currentDayData) { setPlanDays(FALLBACK_DAYS); return null; }
 
   const percentage = quiz ? Math.round((score / quiz.questions.length) * 100) : 0;
 
@@ -312,3 +314,4 @@ function Lesson() {
     </div>
   );
 }
+
